@@ -19,16 +19,16 @@ import (
 	"sync/atomic"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/grpc-ecosystem/go-grpc-middleware"
-	"github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
+     "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	"github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/juju/errors"
 	"github.com/pingcap/kvproto/pkg/tikvpb"
 	"github.com/pingcap/tidb/store/tikv/tikvrpc"
 	"github.com/pingcap/tidb/terror"
 	goctx "golang.org/x/net/context"
-	"google.golang.org/grpc"
-)
+	"google.golang.org/grpc")
 
 // Timeout durations.
 const (
@@ -95,6 +95,7 @@ func (a *connArray) Init(addr string) error {
 		}
 		a.v[i] = conn
 	}
+
 	return nil
 }
 
@@ -126,6 +127,7 @@ type rpcClient struct {
 }
 
 func newRPCClient() *rpcClient {
+	go debugReqCount()
 	return &rpcClient{
 		conns: make(map[string]*connArray),
 	}
@@ -176,6 +178,15 @@ func (c *rpcClient) closeConns() {
 	c.Unlock()
 }
 
+var grpcReqCount int64
+
+func debugReqCount() {
+	for {
+		log.Errorf("GRPCReqCount:%v", atomic.LoadInt64(&grpcReqCount))
+		time.Sleep(10 * time.Second)
+	}
+}
+
 // SendReq sends a Request to server and receives Response.
 func (c *rpcClient) SendReq(ctx goctx.Context, addr string, req *tikvrpc.Request) (*tikvrpc.Response, error) {
 	start := time.Now()
@@ -183,7 +194,11 @@ func (c *rpcClient) SendReq(ctx goctx.Context, addr string, req *tikvrpc.Request
 	if req.Type == tikvrpc.CmdCop {
 		label = rpcLabelCop
 	}
-	defer func() { sendReqHistogram.WithLabelValues(label).Observe(time.Since(start).Seconds()) }()
+	atomic.AddInt64(&grpcReqCount, 1)
+	defer func() {
+		atomic.AddInt64(&grpcReqCount, -1)
+		sendReqHistogram.WithLabelValues(label).Observe(time.Since(start).Seconds())
+	}()
 
 	conn, err := c.getConn(addr)
 	if err != nil {
