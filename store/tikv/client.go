@@ -18,9 +18,10 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-	"github.com/grpc-ecosystem/go-grpc-middleware"
-    "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
+
 	log "github.com/Sirupsen/logrus"
+	"github.com/grpc-ecosystem/go-grpc-middleware"
+     "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	"github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/juju/errors"
 	"github.com/pingcap/kvproto/pkg/tikvpb"
@@ -181,7 +182,7 @@ var grpcReqCount int64
 
 func debugReqCount() {
 	for {
-		log.Errorf("GRPCReqCount:%v", grpcReqCount)
+		log.Errorf("GRPCReqCount:%v", atomic.LoadInt64(&grpcReqCount))
 		time.Sleep(10 * time.Second)
 	}
 }
