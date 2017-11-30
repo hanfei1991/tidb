@@ -28,8 +28,7 @@ import (
 	"github.com/pingcap/tidb/store/tikv/tikvrpc"
 	"github.com/pingcap/tidb/terror"
 	goctx "golang.org/x/net/context"
-	"google.golang.org/grpc"
-)
+	"google.golang.org/grpc")
 
 // Timeout durations.
 const (
@@ -96,7 +95,7 @@ func (a *connArray) Init(addr string) error {
 		}
 		a.v[i] = conn
 	}
-	go debugReqCount()
+
 	return nil
 }
 
@@ -128,6 +127,7 @@ type rpcClient struct {
 }
 
 func newRPCClient() *rpcClient {
+	go debugReqCount()
 	return &rpcClient{
 		conns: make(map[string]*connArray),
 	}
