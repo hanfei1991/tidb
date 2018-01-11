@@ -145,9 +145,6 @@ func (pc PbConverter) constantToPBExpr(con *Constant) *tipb.Expr {
 	default:
 		return nil
 	}
-	if !pc.client.IsRequestTypeSupported(kv.ReqTypeSelect, int64(tp)) {
-		return nil
-	}
 	return &tipb.Expr{Tp: tp, Val: val, FieldType: toPBFieldType(ft)}
 }
 
@@ -171,9 +168,6 @@ func collationToProto(c string) int32 {
 }
 
 func (pc PbConverter) columnToPBExpr(column *Column) *tipb.Expr {
-	if !pc.client.IsRequestTypeSupported(kv.ReqTypeSelect, int64(tipb.ExprType_ColumnRef)) {
-		return nil
-	}
 	switch column.GetType().Tp {
 	case mysql.TypeBit, mysql.TypeSet, mysql.TypeEnum, mysql.TypeGeometry, mysql.TypeUnspecified:
 		return nil
@@ -245,9 +239,6 @@ func (pc PbConverter) compareOpsToPBExpr(expr *ScalarFunction) *tipb.Expr {
 }
 
 func (pc PbConverter) likeToPBExpr(expr *ScalarFunction) *tipb.Expr {
-	if !pc.client.IsRequestTypeSupported(kv.ReqTypeSelect, int64(tipb.ExprType_Like)) {
-		return nil
-	}
 	return pc.convertToPBExpr(expr, tipb.ExprType_Like)
 }
 
@@ -378,9 +369,6 @@ func (pc PbConverter) controlFuncsToPBExpr(expr *ScalarFunction) *tipb.Expr {
 }
 
 func (pc PbConverter) convertToPBExpr(expr *ScalarFunction, tp tipb.ExprType) *tipb.Expr {
-	if !pc.client.IsRequestTypeSupported(kv.ReqTypeSelect, int64(tp)) {
-		return nil
-	}
 	children := make([]*tipb.Expr, 0, len(expr.GetArgs()))
 	for _, arg := range expr.GetArgs() {
 		pbArg := pc.ExprToPB(arg)

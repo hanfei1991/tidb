@@ -50,9 +50,6 @@ func AggFuncToPBExpr(sc *stmtctx.StatementContext, client kv.Client, aggFunc Agg
 	case ast.AggFuncBitAnd:
 		tp = tipb.ExprType_Agg_BitAnd
 	}
-	if !client.IsRequestTypeSupported(kv.ReqTypeSelect, int64(tp)) {
-		return nil
-	}
 
 	children := make([]*tipb.Expr, 0, len(aggFunc.GetArgs()))
 	for _, arg := range aggFunc.GetArgs() {

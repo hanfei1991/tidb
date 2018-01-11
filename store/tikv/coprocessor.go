@@ -44,13 +44,6 @@ type CopClient struct {
 // IsRequestTypeSupported checks whether reqType is supported.
 func (c *CopClient) IsRequestTypeSupported(reqType, subType int64) bool {
 	switch reqType {
-	case kv.ReqTypeSelect, kv.ReqTypeIndex:
-		switch subType {
-		case kv.ReqSubTypeGroupBy, kv.ReqSubTypeBasic, kv.ReqSubTypeTopN:
-			return true
-		default:
-			return c.supportExpr(tipb.ExprType(subType))
-		}
 	case kv.ReqTypeDAG:
 		// Now we only support pushing down stream aggregation on mocktikv.
 		// TODO: Remove it after TiKV supports stream aggregation.
