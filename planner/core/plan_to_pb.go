@@ -22,6 +22,7 @@ import (
 	"github.com/pingcap/tidb/sessionctx"
 	"github.com/pingcap/tidb/table"
 	"github.com/pingcap/tidb/tablecodec"
+	"github.com/pingcap/tidb/util"
 	"github.com/pingcap/tidb/util/codec"
 	"github.com/pingcap/tidb/util/ranger"
 	"github.com/pingcap/tipb/go-tipb"
@@ -121,7 +122,7 @@ func (p *PhysicalLimit) ToPB(ctx sessionctx.Context, storeType kv.StoreType) (*t
 func (p *PhysicalTableScan) ToPB(ctx sessionctx.Context, storeType kv.StoreType) (*tipb.Executor, error) {
 	tsExec := &tipb.TableScan{
 		TableId: p.Table.ID,
-		Columns: model.ColumnsToProto(p.Columns, p.Table.PKIsHandle),
+		Columns: util.ColumnsToProto(p.Columns, p.Table.PKIsHandle),
 		Desc:    p.Desc,
 	}
 	if p.isPartition {
@@ -172,7 +173,7 @@ func (p *PhysicalIndexScan) ToPB(ctx sessionctx.Context, _ kv.StoreType) (*tipb.
 	idxExec := &tipb.IndexScan{
 		TableId: p.Table.ID,
 		IndexId: p.Index.ID,
-		Columns: model.ColumnsToProto(columns, p.Table.PKIsHandle),
+		Columns: util.ColumnsToProto(columns, p.Table.PKIsHandle),
 		Desc:    p.Desc,
 	}
 	if p.isPartition {
@@ -188,6 +189,12 @@ func (p *PhysicalBroadCastJoin) ToPB(ctx sessionctx.Context, storeType kv.StoreT
 	client := ctx.GetClient()
 	leftJoinKeys := make([]expression.Expression, 0, len(p.LeftJoinKeys))
 	rightJoinKeys := make([]expression.Expression, 0, len(p.RightJoinKeys))
+	for _, leftKey := range p.LeftJoinKeys {
+		leftJoinKeys = append(leftJoinKeys, leftKey)
+	}
+	for _, rightKey := range p.RightJoinKeys {
+		rightJoinKeys = append(leftJoinKeys, rightKey)
+	}
 	lChildren, err := p.children[0].ToPB(ctx, storeType)
 	if err != nil {
 		return nil, errors.Trace(err)

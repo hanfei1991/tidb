@@ -44,7 +44,6 @@ import (
 	"github.com/pingcap/tidb/types"
 	binaryJson "github.com/pingcap/tidb/types/json"
 	"github.com/pingcap/tidb/util"
-	"github.com/pingcap/tidb/util/collate"
 	"github.com/pingcap/tidb/util/execdetails"
 	"github.com/pingcap/tidb/util/pdapi"
 	"github.com/pingcap/tidb/util/set"
@@ -58,9 +57,11 @@ const (
 	tableColumns          = "COLUMNS"
 	tableColumnStatistics = "COLUMN_STATISTICS"
 	tableStatistics       = "STATISTICS"
-	tableCharacterSets    = "CHARACTER_SETS"
-	tableCollations       = "COLLATIONS"
-	tableFiles            = "FILES"
+	// TableCharacterSets is the string constant of infoschema charactersets memory table
+	TableCharacterSets = "CHARACTER_SETS"
+	// TableCollations is the string constant of infoschema collations memory table
+	TableCollations = "COLLATIONS"
+	tableFiles      = "FILES"
 	// CatalogVal is the string constant of TABLE_CATALOG
 	CatalogVal            = "def"
 	tableProfiling        = "PROFILING"
@@ -75,18 +76,20 @@ const (
 	tableSchemaPrivileges = "SCHEMA_PRIVILEGES"
 	tableTablePrivileges  = "TABLE_PRIVILEGES"
 	tableColumnPrivileges = "COLUMN_PRIVILEGES"
-	tableEngines          = "ENGINES"
+	// TableEngines is the string constant of infoschema table
+	TableEngines = "ENGINES"
 	// TableViews is the string constant of infoschema table
-	TableViews                              = "VIEWS"
-	tableRoutines                           = "ROUTINES"
-	tableParameters                         = "PARAMETERS"
-	tableEvents                             = "EVENTS"
-	tableGlobalStatus                       = "GLOBAL_STATUS"
-	tableGlobalVariables                    = "GLOBAL_VARIABLES"
-	tableSessionStatus                      = "SESSION_STATUS"
-	tableOptimizerTrace                     = "OPTIMIZER_TRACE"
-	tableTableSpaces                        = "TABLESPACES"
-	tableCollationCharacterSetApplicability = "COLLATION_CHARACTER_SET_APPLICABILITY"
+	TableViews           = "VIEWS"
+	tableRoutines        = "ROUTINES"
+	tableParameters      = "PARAMETERS"
+	tableEvents          = "EVENTS"
+	tableGlobalStatus    = "GLOBAL_STATUS"
+	tableGlobalVariables = "GLOBAL_VARIABLES"
+	tableSessionStatus   = "SESSION_STATUS"
+	tableOptimizerTrace  = "OPTIMIZER_TRACE"
+	tableTableSpaces     = "TABLESPACES"
+	// TableCollationCharacterSetApplicability is the string constant of infoschema memory table.
+	TableCollationCharacterSetApplicability = "COLLATION_CHARACTER_SET_APPLICABILITY"
 	tableProcesslist                        = "PROCESSLIST"
 	tableTiDBIndexes                        = "TIDB_INDEXES"
 	tableTiDBHotRegions                     = "TIDB_HOT_REGIONS"
@@ -120,6 +123,8 @@ const (
 	TableMetricSummaryByLabel = "METRICS_SUMMARY_BY_LABEL"
 	// TableInspectionSummary is the string constant of inspection summary table
 	TableInspectionSummary = "INSPECTION_SUMMARY"
+	// TableInspectionRules is the string constant of currently implemented inspection and summary rules
+	TableInspectionRules = "INSPECTION_RULES"
 )
 
 var tableIDMap = map[string]int64{
@@ -128,8 +133,8 @@ var tableIDMap = map[string]int64{
 	tableColumns:                            autoid.InformationSchemaDBID + 3,
 	tableColumnStatistics:                   autoid.InformationSchemaDBID + 4,
 	tableStatistics:                         autoid.InformationSchemaDBID + 5,
-	tableCharacterSets:                      autoid.InformationSchemaDBID + 6,
-	tableCollations:                         autoid.InformationSchemaDBID + 7,
+	TableCharacterSets:                      autoid.InformationSchemaDBID + 6,
+	TableCollations:                         autoid.InformationSchemaDBID + 7,
 	tableFiles:                              autoid.InformationSchemaDBID + 8,
 	CatalogVal:                              autoid.InformationSchemaDBID + 9,
 	tableProfiling:                          autoid.InformationSchemaDBID + 10,
@@ -144,7 +149,7 @@ var tableIDMap = map[string]int64{
 	tableSchemaPrivileges:                   autoid.InformationSchemaDBID + 19,
 	tableTablePrivileges:                    autoid.InformationSchemaDBID + 20,
 	tableColumnPrivileges:                   autoid.InformationSchemaDBID + 21,
-	tableEngines:                            autoid.InformationSchemaDBID + 22,
+	TableEngines:                            autoid.InformationSchemaDBID + 22,
 	TableViews:                              autoid.InformationSchemaDBID + 23,
 	tableRoutines:                           autoid.InformationSchemaDBID + 24,
 	tableParameters:                         autoid.InformationSchemaDBID + 25,
@@ -154,7 +159,7 @@ var tableIDMap = map[string]int64{
 	tableSessionStatus:                      autoid.InformationSchemaDBID + 29,
 	tableOptimizerTrace:                     autoid.InformationSchemaDBID + 30,
 	tableTableSpaces:                        autoid.InformationSchemaDBID + 31,
-	tableCollationCharacterSetApplicability: autoid.InformationSchemaDBID + 32,
+	TableCollationCharacterSetApplicability: autoid.InformationSchemaDBID + 32,
 	tableProcesslist:                        autoid.InformationSchemaDBID + 33,
 	tableTiDBIndexes:                        autoid.InformationSchemaDBID + 34,
 	TableSlowQuery:                          autoid.InformationSchemaDBID + 35,
@@ -178,6 +183,7 @@ var tableIDMap = map[string]int64{
 	TableMetricSummaryByLabel:               autoid.InformationSchemaDBID + 53,
 	TableMetricTables:                       autoid.InformationSchemaDBID + 54,
 	TableInspectionSummary:                  autoid.InformationSchemaDBID + 55,
+	TableInspectionRules:                    autoid.InformationSchemaDBID + 56,
 }
 
 type columnInfo struct {
@@ -926,6 +932,12 @@ var tableInspectionSummaryCols = []columnInfo{
 	{name: "MAX_VALUE", tp: mysql.TypeDouble, size: 22, decimal: 6},
 }
 
+var tableInspectionRulesCols = []columnInfo{
+	{name: "NAME", tp: mysql.TypeVarchar, size: 64},
+	{name: "TYPE", tp: mysql.TypeVarchar, size: 64},
+	{name: "COMMENT", tp: mysql.TypeVarchar, size: 256},
+}
+
 var tableMetricTablesCols = []columnInfo{
 	{name: "TABLE_NAME", tp: mysql.TypeVarchar, size: 64},
 	{name: "PROMQL", tp: mysql.TypeVarchar, size: 64},
@@ -987,16 +999,16 @@ func dataForTiKVRegionStatus(ctx sessionctx.Context) (records [][]types.Datum, e
 func newTiKVRegionStatusCol(region *helper.RegionInfo, table *helper.TableInfo) []types.Datum {
 	row := make([]types.Datum, len(tableTiKVRegionStatusCols))
 	row[0].SetInt64(region.ID)
-	row[1].SetString(region.StartKey, mysql.DefaultCollationName, collate.DefaultLen)
-	row[2].SetString(region.EndKey, mysql.DefaultCollationName, collate.DefaultLen)
+	row[1].SetString(region.StartKey, mysql.DefaultCollationName)
+	row[2].SetString(region.EndKey, mysql.DefaultCollationName)
 	if table != nil {
 		row[3].SetInt64(table.Table.ID)
-		row[4].SetString(table.DB.Name.O, mysql.DefaultCollationName, collate.DefaultLen)
-		row[5].SetString(table.Table.Name.O, mysql.DefaultCollationName, collate.DefaultLen)
+		row[4].SetString(table.DB.Name.O, mysql.DefaultCollationName)
+		row[5].SetString(table.Table.Name.O, mysql.DefaultCollationName)
 		if table.IsIndex {
 			row[6].SetInt64(1)
 			row[7].SetInt64(table.Index.ID)
-			row[8].SetString(table.Index.Name.O, mysql.DefaultCollationName, collate.DefaultLen)
+			row[8].SetString(table.Index.Name.O, mysql.DefaultCollationName)
 		} else {
 			row[6].SetInt64(0)
 		}
@@ -1062,12 +1074,12 @@ func newTiKVRegionPeersCols(region *helper.RegionInfo) [][]types.Datum {
 			row[4].SetInt64(0)
 		}
 		if pendingPeerIDSet.Exist(peer.ID) {
-			row[5].SetString(pendingPeer, mysql.DefaultCollationName, collate.DefaultLen)
+			row[5].SetString(pendingPeer, mysql.DefaultCollationName)
 		} else if downSec, ok := downPeerMap[peer.ID]; ok {
-			row[5].SetString(downPeer, mysql.DefaultCollationName, collate.DefaultLen)
+			row[5].SetString(downPeer, mysql.DefaultCollationName)
 			row[6].SetInt64(downSec)
 		} else {
-			row[5].SetString(normalPeer, mysql.DefaultCollationName, collate.DefaultLen)
+			row[5].SetString(normalPeer, mysql.DefaultCollationName)
 		}
 		records = append(records, row)
 	}
@@ -1090,9 +1102,9 @@ func dataForTiKVStoreStatus(ctx sessionctx.Context) (records [][]types.Datum, er
 	for _, storeStat := range storesStat.Stores {
 		row := make([]types.Datum, len(tableTiKVStoreStatusCols))
 		row[0].SetInt64(storeStat.Store.ID)
-		row[1].SetString(storeStat.Store.Address, mysql.DefaultCollationName, collate.DefaultLen)
+		row[1].SetString(storeStat.Store.Address, mysql.DefaultCollationName)
 		row[2].SetInt64(storeStat.Store.State)
-		row[3].SetString(storeStat.Store.StateName, mysql.DefaultCollationName, collate.DefaultLen)
+		row[3].SetString(storeStat.Store.StateName, mysql.DefaultCollationName)
 		data, err := json.Marshal(storeStat.Store.Labels)
 		if err != nil {
 			return nil, err
@@ -1102,9 +1114,9 @@ func dataForTiKVStoreStatus(ctx sessionctx.Context) (records [][]types.Datum, er
 			return nil, err
 		}
 		row[4].SetMysqlJSON(bj)
-		row[5].SetString(storeStat.Store.Version, mysql.DefaultCollationName, collate.DefaultLen)
-		row[6].SetString(storeStat.Status.Capacity, mysql.DefaultCollationName, collate.DefaultLen)
-		row[7].SetString(storeStat.Status.Available, mysql.DefaultCollationName, collate.DefaultLen)
+		row[5].SetString(storeStat.Store.Version, mysql.DefaultCollationName)
+		row[6].SetString(storeStat.Status.Capacity, mysql.DefaultCollationName)
+		row[7].SetString(storeStat.Status.Available, mysql.DefaultCollationName)
 		row[8].SetInt64(storeStat.Status.LeaderCount)
 		row[9].SetFloat64(storeStat.Status.LeaderWeight)
 		row[10].SetFloat64(storeStat.Status.LeaderScore)
@@ -1117,63 +1129,10 @@ func dataForTiKVStoreStatus(ctx sessionctx.Context) (records [][]types.Datum, er
 		row[16].SetMysqlTime(startTs)
 		lastHeartbeatTs := types.NewTime(types.FromGoTime(storeStat.Status.LastHeartbeatTs), mysql.TypeDatetime, types.DefaultFsp)
 		row[17].SetMysqlTime(lastHeartbeatTs)
-		row[18].SetString(storeStat.Status.Uptime, mysql.DefaultCollationName, collate.DefaultLen)
+		row[18].SetString(storeStat.Status.Uptime, mysql.DefaultCollationName)
 		records = append(records, row)
 	}
 	return records, nil
-}
-
-func dataForCharacterSets() (records [][]types.Datum) {
-
-	charsets := charset.GetSupportedCharsets()
-
-	for _, charset := range charsets {
-
-		records = append(records,
-			types.MakeDatums(charset.Name, charset.DefaultCollation, charset.Desc, charset.Maxlen),
-		)
-
-	}
-
-	return records
-
-}
-
-func dataForCollations() (records [][]types.Datum) {
-
-	collations := charset.GetSupportedCollations()
-
-	for _, collation := range collations {
-
-		isDefault := ""
-		if collation.IsDefault {
-			isDefault = "Yes"
-		}
-
-		records = append(records,
-			types.MakeDatums(collation.Name, collation.CharsetName, collation.ID, isDefault, "Yes", 1),
-		)
-
-	}
-
-	return records
-
-}
-
-func dataForCollationCharacterSetApplicability() (records [][]types.Datum) {
-
-	collations := charset.GetSupportedCollations()
-
-	for _, collation := range collations {
-
-		records = append(records,
-			types.MakeDatums(collation.Name, collation.CharsetName),
-		)
-
-	}
-
-	return records
-
 }
 
 func dataForSessionVar(ctx sessionctx.Context) (records [][]types.Datum, err error) {
@@ -1222,20 +1181,6 @@ func dataForProcesslist(ctx sessionctx.Context) [][]types.Datum {
 		record := types.MakeDatums(rows...)
 		records = append(records, record)
 	}
-	return records
-}
-
-func dataForEngines() (records [][]types.Datum) {
-	records = append(records,
-		types.MakeDatums(
-			"InnoDB",  // Engine
-			"DEFAULT", // Support
-			"Supports transactions, row-level locking, and foreign keys", // Comment
-			"YES", // Transactions
-			"YES", // XA
-			"YES", // Savepoints
-		),
-	)
 	return records
 }
 
@@ -2082,16 +2027,16 @@ func dataForHotRegionByMetrics(metrics []helper.HotTableIndex, tp string) [][]ty
 		row := make([]types.Datum, len(tableTiDBHotRegionsCols))
 		if tblIndex.IndexName != "" {
 			row[1].SetInt64(tblIndex.IndexID)
-			row[4].SetString(tblIndex.IndexName, mysql.DefaultCollationName, collate.DefaultLen)
+			row[4].SetString(tblIndex.IndexName, mysql.DefaultCollationName)
 		} else {
 			row[1].SetNull()
 			row[4].SetNull()
 		}
 		row[0].SetInt64(tblIndex.TableID)
-		row[2].SetString(tblIndex.DbName, mysql.DefaultCollationName, collate.DefaultLen)
-		row[3].SetString(tblIndex.TableName, mysql.DefaultCollationName, collate.DefaultLen)
+		row[2].SetString(tblIndex.DbName, mysql.DefaultCollationName)
+		row[3].SetString(tblIndex.TableName, mysql.DefaultCollationName)
 		row[5].SetUint64(tblIndex.RegionID)
-		row[6].SetString(tp, mysql.DefaultCollationName, collate.DefaultLen)
+		row[6].SetString(tp, mysql.DefaultCollationName)
 		if tblIndex.RegionMetric == nil {
 			row[7].SetNull()
 			row[8].SetNull()
@@ -2405,8 +2350,8 @@ var tableNameToColumns = map[string][]columnInfo{
 	tableColumns:                            columnsCols,
 	tableColumnStatistics:                   columnStatisticsCols,
 	tableStatistics:                         statisticsCols,
-	tableCharacterSets:                      charsetCols,
-	tableCollations:                         collationsCols,
+	TableCharacterSets:                      charsetCols,
+	TableCollations:                         collationsCols,
 	tableFiles:                              filesCols,
 	tableProfiling:                          profilingCols,
 	tablePartitions:                         partitionsCols,
@@ -2420,7 +2365,7 @@ var tableNameToColumns = map[string][]columnInfo{
 	tableSchemaPrivileges:                   tableSchemaPrivilegesCols,
 	tableTablePrivileges:                    tableTablePrivilegesCols,
 	tableColumnPrivileges:                   tableColumnPrivilegesCols,
-	tableEngines:                            tableEnginesCols,
+	TableEngines:                            tableEnginesCols,
 	TableViews:                              tableViewsCols,
 	tableRoutines:                           tableRoutinesCols,
 	tableParameters:                         tableParametersCols,
@@ -2430,7 +2375,7 @@ var tableNameToColumns = map[string][]columnInfo{
 	tableSessionStatus:                      tableSessionStatusCols,
 	tableOptimizerTrace:                     tableOptimizerTraceCols,
 	tableTableSpaces:                        tableTableSpacesCols,
-	tableCollationCharacterSetApplicability: tableCollationCharacterSetApplicabilityCols,
+	TableCollationCharacterSetApplicability: tableCollationCharacterSetApplicabilityCols,
 	tableProcesslist:                        tableProcesslistCols,
 	tableTiDBIndexes:                        tableTiDBIndexesCols,
 	TableSlowQuery:                          slowQueryCols,
@@ -2452,6 +2397,7 @@ var tableNameToColumns = map[string][]columnInfo{
 	TableMetricSummaryByLabel:               tableMetricSummaryByLabelCols,
 	TableMetricTables:                       tableMetricTablesCols,
 	TableInspectionSummary:                  tableInspectionSummaryCols,
+	TableInspectionRules:                    tableInspectionRulesCols,
 }
 
 func createInfoSchemaTable(_ autoid.Allocators, meta *model.TableInfo) (table.Table, error) {
@@ -2500,10 +2446,6 @@ func (it *infoschemaTable) getRows(ctx sessionctx.Context, cols []*table.Column)
 		fullRows = dataForColumns(ctx, dbs)
 	case tableStatistics:
 		fullRows = dataForStatistics(ctx, dbs)
-	case tableCharacterSets:
-		fullRows = dataForCharacterSets()
-	case tableCollations:
-		fullRows = dataForCollations()
 	case tableSessionVar:
 		fullRows, err = dataForSessionVar(ctx)
 	case tableConstraints:
@@ -2521,8 +2463,6 @@ func (it *infoschemaTable) getRows(ctx sessionctx.Context, cols []*table.Column)
 	case tablePlugins, tableTriggers:
 	case tableUserPrivileges:
 		fullRows = dataForUserPrivileges(ctx)
-	case tableEngines:
-		fullRows = dataForEngines()
 	case tableRoutines:
 	// TODO: Fill the following tables.
 	case tableSchemaPrivileges:
@@ -2535,8 +2475,6 @@ func (it *infoschemaTable) getRows(ctx sessionctx.Context, cols []*table.Column)
 	case tableSessionStatus:
 	case tableOptimizerTrace:
 	case tableTableSpaces:
-	case tableCollationCharacterSetApplicability:
-		fullRows = dataForCollationCharacterSetApplicability()
 	case tableProcesslist:
 		fullRows = dataForProcesslist(ctx)
 	case tableTiDBHotRegions:
