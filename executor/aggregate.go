@@ -17,7 +17,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"runtime/debug"
 	"sync"
 
 	"github.com/cznic/mathutil"
@@ -359,7 +358,7 @@ func (w *HashAggPartialWorker) getChildInput() bool {
 func recoveryHashAgg(output chan *AfFinalResult, r interface{}) {
 	err := errors.Errorf("%v", r)
 	output <- &AfFinalResult{err: errors.Errorf("%v", r)}
-	logutil.BgLogger().Error("parallel hash aggregation panicked", zap.Error(err), zap.ByteString("stack", debug.Stack()))
+	logutil.BgLogger().Error("parallel hash aggregation panicked", zap.Error(err))
 }
 
 func (w *HashAggPartialWorker) run(ctx sessionctx.Context, waitGroup *sync.WaitGroup, finalConcurrency int) {
