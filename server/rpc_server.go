@@ -16,7 +16,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"runtime/debug"
 
 	"github.com/pingcap/kvproto/pkg/coprocessor"
 	"github.com/pingcap/kvproto/pkg/diagnosticspb"
@@ -77,7 +76,7 @@ func (s *rpcServer) Coprocessor(ctx context.Context, in *coprocessor.Request) (r
 	resp = &coprocessor.Response{}
 	defer func() {
 		if v := recover(); v != nil {
-			logutil.BgLogger().Error("panic when RPC server handing coprocessor", zap.Any("panic", v), zap.ByteString("stack", debug.Stack()))
+			logutil.BgLogger().Error("panic when RPC server handing coprocessor", zap.Any("stack", v))
 			resp.OtherError = fmt.Sprintf("panic when RPC server handing coprocessor, stack:%v", v)
 		}
 	}()
