@@ -458,10 +458,18 @@ func (s *testTableCodecSuite) TestDecodeIndexKey(c *C) {
 
 func (s *testTableCodecSuite) TestCutPrefix(c *C) {
 	key := EncodeTableIndexPrefix(42, 666)
-	res := CutRowKeyPrefix(key)
+	res, err := CutRowKeyPrefix(key)
 	c.Assert(res, BytesEquals, []byte{0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x2, 0x9a})
-	res = CutIndexPrefix(key)
+	c.Assert(err, IsNil)
+	res, err = CutIndexPrefix(key)
 	c.Assert(res, BytesEquals, []byte{})
+	c.Assert(err, IsNil)
+
+	emptyKey := make([]byte, 0, 0)
+	_, err = CutRowKeyPrefix(emptyKey)
+	c.Assert(err, NotNil)
+	_, err = CutIndexPrefix(emptyKey)
+	c.Assert(err, NotNil)
 }
 
 func (s *testTableCodecSuite) TestRange(c *C) {

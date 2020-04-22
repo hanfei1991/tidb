@@ -81,8 +81,11 @@ func EncodeRowKeyWithHandle(tableID int64, handle int64) kv.Key {
 }
 
 // CutRowKeyPrefix cuts the row key prefix.
-func CutRowKeyPrefix(key kv.Key) []byte {
-	return key[prefixLen:]
+func CutRowKeyPrefix(key kv.Key) ([]byte, error) {
+	if len(key.String()) < prefixLen {
+		return nil, errors.New("Invalid key: " + key.String())
+	}
+	return key[prefixLen:], nil
 }
 
 // EncodeRecordKey encodes the recordPrefix, row handle into a kv.Key.
@@ -584,8 +587,11 @@ func CutIndexKey(key kv.Key, colIDs []int64) (values map[int64][]byte, b []byte,
 }
 
 // CutIndexPrefix cuts the index prefix.
-func CutIndexPrefix(key kv.Key) []byte {
-	return key[prefixLen+idLen:]
+func CutIndexPrefix(key kv.Key) ([]byte, error) {
+	if len(key.String()) < prefixLen+idLen {
+		return nil, errors.New("Invalid key: " + key.String())
+	}
+	return key[prefixLen+idLen:], nil
 }
 
 // CutIndexKeyNew cuts encoded index key into colIDs to bytes slices.

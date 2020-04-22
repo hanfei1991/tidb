@@ -212,11 +212,19 @@ func (q *QueryFeedback) Update(startKey kv.Key, counts []int64) {
 		return
 	}
 
+	var err error
 	if q.Tp == IndexType {
-		startKey = tablecodec.CutIndexPrefix(startKey)
+		startKey, err = tablecodec.CutIndexPrefix(startKey)
 	} else {
-		startKey = tablecodec.CutRowKeyPrefix(startKey)
+		startKey, err = tablecodec.CutRowKeyPrefix(startKey)
 	}
+
+	if err != nil {
+		q.Invalidate()
+		logutil.BgLogger().Warn("feedback meets error :", zap.Error(err))
+		return
+	}
+
 	// Find the range that startKey falls in.
 	idx := sort.Search(len(q.Feedback), func(i int) bool {
 		return bytes.Compare(q.Feedback[i].Lower.GetBytes(), startKey) > 0
