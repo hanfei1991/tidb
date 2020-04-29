@@ -390,8 +390,8 @@ func (b *batchCopIterator) handleBatchCopResponse(bo *Backoffer, response *copro
 	}
 
 	resp := batchCopResponse{
-		pbResp:   response,
-		detail:   new(execdetails.ExecDetails),
+		pbResp: response,
+		detail: new(execdetails.ExecDetails),
 	}
 
 	resp.detail.BackoffTime = time.Duration(bo.totalSleep) * time.Millisecond
