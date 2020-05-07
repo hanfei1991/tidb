@@ -249,7 +249,7 @@ func (p *PhysicalBroadCastJoin) ToPB(ctx sessionctx.Context, storeType kv.StoreT
 	if leftErr != nil {
 		return nil, leftErr
 	}
-	right, rightErr := expression.ExpressionsToPBList(sc, leftJoinKeys, client)
+	right, rightErr := expression.ExpressionsToPBList(sc, rightJoinKeys, client)
 	if rightErr != nil {
 		return nil, rightErr
 	}
