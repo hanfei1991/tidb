@@ -191,7 +191,7 @@ func (p *baseLogicalPlan) findBestTask(prop *property.PhysicalProperty) (bestTas
 		return bestTask, nil
 	}
 
-	if prop.TaskTp != property.RootTaskType {
+	if prop.TaskTp != property.RootTaskType && prop.TaskTp != property.CopTiFlashLocalReadTaskType && prop.TaskTp != property.CopTiFlashGlobalReadTaskType {
 		// Currently all plan cannot totally push down.
 		p.storeTask(prop, invalidTask)
 		return invalidTask, nil
