@@ -1414,11 +1414,26 @@ func (p *LogicalJoin) tryToGetIndexJoin(prop *property.PhysicalProperty) (indexJ
 	return append(allLeftOuterJoins, allRightOuterJoins...), false
 }
 
+func tempDescribe(p LogicalPlan) string {
+	if len(p.Children()) == 0 {
+		return p.ExplainInfo()
+	}
+	desc := "(" + p.ExplainInfo() + " "
+	for i, c := range p.Children() {
+		if i != 0 {
+			desc = desc + ", "
+		}
+		desc = desc + tempDescribe(c)
+	}
+	return desc + ")"
+}
+
 // LogicalJoin can generates hash join, index join and sort merge join.
 // Firstly we check the hint, if hint is figured by user, we force to choose the corresponding physical plan.
 // If the hint is not matched, it will get other candidates.
 // If the hint is not figured, we will pick all candidates.
 func (p *LogicalJoin) exhaustPhysicalPlans(prop *property.PhysicalProperty) ([]PhysicalPlan, bool) {
+	fmt.Println("exhaustPhysicalPlans", p.OutputNames(), p.hintInfo, tempDescribe(p))
 	failpoint.Inject("MockOnlyEnableIndexHashJoin", func(val failpoint.Value) {
 		if val.(bool) {
 			indexJoins, _ := p.tryToGetIndexJoin(prop)
@@ -1509,8 +1524,12 @@ func (p *LogicalJoin) tryToGetBroadCastJoin(prop *property.PhysicalProperty) []P
 		preferredBuildIndex = 1
 	}
 	preferredGlobalIndex := preferredBuildIndex
-	if prop.TaskTp != property.CopTiFlashGlobalReadTaskType && getAllDataSourceTotalRowSize(p.children[preferredGlobalIndex]) > getAllDataSourceTotalRowSize(p.children[1-preferredGlobalIndex]) {
-		preferredGlobalIndex = 1 - preferredGlobalIndex
+	if prop.TaskTp != property.CopTiFlashGlobalReadTaskType {
+		if hasPrefer, idx := p.getPreferredBCJLocalIndex(); hasPrefer {
+			preferredGlobalIndex = 1 - idx
+		} else if getAllDataSourceTotalRowSize(p.children[preferredGlobalIndex]) > getAllDataSourceTotalRowSize(p.children[1-preferredGlobalIndex]) {
+			preferredGlobalIndex = 1 - preferredGlobalIndex
+		}
 	}
 	// todo: currently, build side is the one has less rowcount and global read side
 	//  is the one has less datasource row size(which mean less remote read), need
