@@ -1432,7 +1432,7 @@ func (p *LogicalJoin) exhaustPhysicalPlans(prop *property.PhysicalProperty) ([]P
 	joins := make([]PhysicalPlan, 0, 5)
 	if p.ctx.GetSessionVars().AllowBCJ {
 		broadCastJoins := p.tryToGetBroadCastJoin(prop)
-		if (p.preferJoinType & preferBCJoin) > 0 && len(broadCastJoins) > 0 {
+		if (p.preferJoinType & preferBCJoin) > 0 {
 			logutil.BgLogger().Info("prefer bc join", zap.Int("bc count", len(broadCastJoins)))
 			return broadCastJoins, true
 		}

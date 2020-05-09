@@ -225,12 +225,6 @@ github.com/hanfei1991/parser v0.0.0-20200506100705-497ab5ecbc16 h1:zlhQFwi+d+tkw
 github.com/hanfei1991/parser v0.0.0-20200506100705-497ab5ecbc16/go.mod h1:9v0Edh8IbgjGYW2ArJr19E+bvL8zKahsFp+ixWeId+4=
 github.com/hanfei1991/parser v0.0.0-20200506102604-dde82b00618d h1:m2LqNBUncEXeUo44rcIlrKv0v5fbvBUihcidWDDdg2E=
 github.com/hanfei1991/parser v0.0.0-20200506102604-dde82b00618d/go.mod h1:9v0Edh8IbgjGYW2ArJr19E+bvL8zKahsFp+ixWeId+4=
-github.com/hanfei1991/tipb v0.0.0-20200212061130-c4d518eb1d60 h1:i4siZGSlOhQSQYyDszniOVsGp8X72rAbl0FLZN9nxCI=
-github.com/hanfei1991/tipb v0.0.0-20200212061130-c4d518eb1d60/go.mod h1:nPMpOLbGpW71jAalpqgYYjMAZfCGk+DdSPhoIVVizkU=
-github.com/hanfei1991/tipb v0.0.0-20200308103915-5f3b53798f00 h1:wRO6S3mWrAcoS78mGn1hvjPQjqTgA+MBzbq5NkKRQRM=
-github.com/hanfei1991/tipb v0.0.0-20200308103915-5f3b53798f00/go.mod h1:nPMpOLbGpW71jAalpqgYYjMAZfCGk+DdSPhoIVVizkU=
-github.com/hanfei1991/tipb v0.0.0-20200421083959-59279b989667 h1:hrW/fUBSqAWYp0LFv5sct69QuvSjmYz89jjfWyZr7YM=
-github.com/hanfei1991/tipb v0.0.0-20200421083959-59279b989667/go.mod h1:nPMpOLbGpW71jAalpqgYYjMAZfCGk+DdSPhoIVVizkU=
 github.com/hanfei1991/tipb v0.0.0-20200506100205-b17edac4757f h1:zO5fnD8Wmce+3D9ukaP/2dUL7pgGNVrfiLWwx6kdMYs=
 github.com/hanfei1991/tipb v0.0.0-20200506100205-b17edac4757f/go.mod h1:nPMpOLbGpW71jAalpqgYYjMAZfCGk+DdSPhoIVVizkU=
 github.com/hashicorp/golang-lru v0.5.0/go.mod h1:/m3WP610KZHVQ1SGc6re/UDhFvYD7pJ4Ao+sR/qLZy8=

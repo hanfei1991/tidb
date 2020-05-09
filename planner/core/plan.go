@@ -15,12 +15,12 @@ package core
 
 import (
 	"fmt"
-	"github.com/pingcap/tidb/kv"
 	"math"
 	"strconv"
 
 	"github.com/cznic/mathutil"
 	"github.com/pingcap/tidb/expression"
+	"github.com/pingcap/tidb/kv"
 	"github.com/pingcap/tidb/planner/property"
 	"github.com/pingcap/tidb/sessionctx"
 	"github.com/pingcap/tidb/types"
