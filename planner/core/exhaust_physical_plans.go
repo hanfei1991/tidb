@@ -1414,26 +1414,12 @@ func (p *LogicalJoin) tryToGetIndexJoin(prop *property.PhysicalProperty) (indexJ
 	return append(allLeftOuterJoins, allRightOuterJoins...), false
 }
 
-func tempDescribe(p LogicalPlan) string {
-	if len(p.Children()) == 0 {
-		return p.ExplainInfo()
-	}
-	desc := "(" + p.ExplainInfo() + " "
-	for i, c := range p.Children() {
-		if i != 0 {
-			desc = desc + ", "
-		}
-		desc = desc + tempDescribe(c)
-	}
-	return desc + ")"
-}
 
 // LogicalJoin can generates hash join, index join and sort merge join.
 // Firstly we check the hint, if hint is figured by user, we force to choose the corresponding physical plan.
 // If the hint is not matched, it will get other candidates.
 // If the hint is not figured, we will pick all candidates.
 func (p *LogicalJoin) exhaustPhysicalPlans(prop *property.PhysicalProperty) ([]PhysicalPlan, bool) {
-	fmt.Println("exhaustPhysicalPlans", p.OutputNames(), p.hintInfo, tempDescribe(p))
 	failpoint.Inject("MockOnlyEnableIndexHashJoin", func(val failpoint.Value) {
 		if val.(bool) {
 			indexJoins, _ := p.tryToGetIndexJoin(prop)
