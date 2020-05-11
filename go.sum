@@ -240,6 +240,8 @@ github.com/ichn-hu/parser v0.0.0-20200509094229-22ef1fc04ea4 h1:u3DZVvdncsK1VRPM
 github.com/ichn-hu/parser v0.0.0-20200509094229-22ef1fc04ea4/go.mod h1:9v0Edh8IbgjGYW2ArJr19E+bvL8zKahsFp+ixWeId+4=
 github.com/ichn-hu/parser v0.0.0-20200510024028-6a681e8c9110 h1:ijs3GcuNutc7pAU9LwQ0ctYyMh0oApeK3AqlXIsFjXQ=
 github.com/ichn-hu/parser v0.0.0-20200510024028-6a681e8c9110/go.mod h1:9v0Edh8IbgjGYW2ArJr19E+bvL8zKahsFp+ixWeId+4=
+github.com/ichn-hu/parser v0.0.0-20200511041337-73e0eaaee304 h1:JRc6f6u7gkevPFKFQEjsjMgsZDMCLDN22siag4WE/pU=
+github.com/ichn-hu/parser v0.0.0-20200511041337-73e0eaaee304/go.mod h1:9v0Edh8IbgjGYW2ArJr19E+bvL8zKahsFp+ixWeId+4=
 github.com/inconshreveable/mousetrap v1.0.0 h1:Z8tu5sraLXCXIcARxBp/8cbvlwVa7Z1NHg9XEKhtSvM=
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
 github.com/jinzhu/gorm v1.9.12/go.mod h1:vhTjlKSJUTWNtcbQtrMBFCxy7eXTzeCAzfL5fBZT/Qs=

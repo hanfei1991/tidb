@@ -56,7 +56,7 @@
         ]
       },
       {
-        "SQL": "explain select /*+ tidb_bcj(fact_t,d1_t), bc_join_prefer_local(d1_t) */ count(*) from fact_t, d1_t where fact_t.d1_k = d1_t.d1_k",
+        "SQL": "explain select /*+ tidb_bcj(fact_t,d1_t), bcj_local(d1_t) */ count(*) from fact_t, d1_t where fact_t.d1_k = d1_t.d1_k",
         "Plan": [
           "StreamAgg_25 1.00 root  funcs:count(Column#14)->Column#11",
           "└─TableReader_26 1.00 root  data:StreamAgg_13",
@@ -69,7 +69,7 @@
         ]
       },
       {
-        "SQL": "explain select /*+ tidb_bcj(fact_t,d1_t,d2_t,d3_t), bc_join_prefer_local(d2_t) */ count(*) from fact_t, d1_t, d2_t, d3_t where fact_t.d1_k = d1_t.d1_k and fact_t.d2_k = d2_t.d2_k and fact_t.d3_k = d3_t.d3_k",
+        "SQL": "explain select /*+ tidb_bcj(fact_t,d1_t,d2_t,d3_t), bcj_local(d2_t) */ count(*) from fact_t, d1_t, d2_t, d3_t where fact_t.d1_k = d1_t.d1_k and fact_t.d2_k = d2_t.d2_k and fact_t.d3_k = d3_t.d3_k",
         "Plan": [
           "StreamAgg_35 1.00 root  funcs:count(Column#20)->Column#17",
           "└─TableReader_36 1.00 root  data:StreamAgg_17",

@@ -64,9 +64,9 @@ const (
 	TiDBBroadCastJoin = "tidb_bcj"
 
 	// HintBCJ indicates applying broadcast join by force.
-	HintBCJ            = "bc_join"
+	HintBCJ = "bc_join"
 	// HintBCJPreferLocal specifies the preferred local read table
-	HintBCJPreferLocal = "bc_join_prefer_local"
+	HintBCJPreferLocal = "bcj_local"
 
 	// TiDBIndexNestedLoopJoin is hint enforce index nested loop join.
 	TiDBIndexNestedLoopJoin = "tidb_inlj"
