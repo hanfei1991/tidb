@@ -313,9 +313,9 @@ func (c *rpcClient) SendRequest(ctx context.Context, addr string, req *tikvrpc.R
 	start := time.Now()
 	defer c.updateTiKVSendReqHistogram(req, start)
 
-	if atomic.CompareAndSwapUint32(&c.idleNotify, 1, 0) {
-		c.recycleIdleConnArray()
-	}
+	//if atomic.CompareAndSwapUint32(&c.idleNotify, 1, 0) {
+	//	c.recycleIdleConnArray()
+	//}
 
 	enableBatch := req.StoreTp != kv.TiDB
 	connArray, err := c.getConnArray(addr, enableBatch)
