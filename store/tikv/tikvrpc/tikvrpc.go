@@ -162,6 +162,7 @@ type Request struct {
 	kvrpcpb.Context
 	ReplicaReadSeed *uint32 // pointer to follower read seed in snapshot/coprocessor
 	StoreTp         kv.StoreType
+	Killed          *uint32
 }
 
 // NewRequest returns new kv rpc request.
@@ -859,6 +860,7 @@ func CallDebugRPC(ctx context.Context, client debugpb.DebugClient, req *Request)
 type Lease struct {
 	Cancel   context.CancelFunc
 	deadline int64 // A time.UnixNano value, if time.Now().UnixNano() > deadline, cancel() would be called.
+	Killed   *uint32
 }
 
 // Recv overrides the stream client Recv() function.
@@ -939,7 +941,11 @@ func keepOnlyActive(array []*Lease, now int64) []*Lease {
 	for i := 0; i < len(array); i++ {
 		item := array[i]
 		deadline := atomic.LoadInt64(&item.deadline)
-		if deadline == 0 || deadline > now {
+		var killed uint32 = 0
+		if item.Killed != nil {
+			killed = atomic.LoadUint32(item.Killed)
+		}
+		if (deadline == 0 || deadline > now) && killed == 0 {
 			array[idx] = array[i]
 			idx++
 		} else {

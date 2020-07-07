@@ -385,6 +385,7 @@ func (c *rpcClient) getCopStreamResponse(ctx context.Context, client tikvpb.Tikv
 	copStream := resp.Resp.(*tikvrpc.CopStreamResponse)
 	copStream.Timeout = timeout
 	copStream.Lease.Cancel = cancel
+	copStream.Lease.Killed = req.Killed
 	connArray.streamTimeout <- &copStream.Lease
 
 	// Read the first streaming response to get CopStreamResponse.
