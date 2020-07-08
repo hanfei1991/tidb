@@ -97,7 +97,7 @@ func (ss *RegionBatchRequestSender) sendReqToAddr(bo *Backoffer, ctxs []copTaskA
 func (ss *RegionBatchRequestSender) onSendFail(bo *Backoffer, ctx *RPCContext, err error) error {
 	// If it failed because the context is cancelled by ourself, don't retry.
 	if errors.Cause(err) == context.Canceled || status.Code(errors.Cause(err)) == codes.Canceled {
-		return errors.Trace(err)
+		return errors.Trace(ErrQueryInterrupted)
 	} else if atomic.LoadUint32(&ShuttingDown) > 0 {
 		return errTiDBShuttingDown
 	}

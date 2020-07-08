@@ -348,9 +348,6 @@ func (b *batchCopIterator) handleTaskOnce(ctx context.Context, bo *Backoffer, ta
 		return b.retryBatchCopTask(ctx, bo, task)
 	}
 	if err != nil {
-		if errors.Cause(err) == context.Canceled {
-			return nil, ErrQueryInterrupted
-		}
 		return nil, errors.Trace(err)
 	}
 	return nil, b.handleStreamedBatchCopResponse(ctx, bo, resp.Resp.(*tikvrpc.BatchCopStreamResponse), task)
