@@ -16,6 +16,8 @@ package tikvrpc
 import (
 	"context"
 	"fmt"
+	"github.com/pingcap/tidb/util/logutil"
+	"go.uber.org/zap"
 	"sync/atomic"
 	"time"
 
@@ -944,6 +946,7 @@ func keepOnlyActive(array []*Lease, now int64) []*Lease {
 		var killed uint32 = 0
 		if item.Killed != nil {
 			killed = atomic.LoadUint32(item.Killed)
+			logutil.BgLogger().Debug("check killed", zap.Uint32("killed", killed))
 		}
 		if (deadline == 0 || deadline > now) && killed == 0 {
 			array[idx] = array[i]
