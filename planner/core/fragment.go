@@ -15,6 +15,7 @@ package core
 
 import (
 	"context"
+	"github.com/pingcap/tipb/go-tipb"
 
 	"github.com/pingcap/errors"
 	"github.com/pingcap/tidb/distsql"
@@ -81,8 +82,14 @@ func (e *mppTaskGenerator) generateMPPTasksForFragment(f *Fragment) (tasks []*kv
 	if len(tasks) == 0 {
 		return nil, errors.New("cannot find mpp task")
 	}
+
 	for _, r := range f.ExchangeReceivers {
 		s := r.ChildPf.ExchangeSender
+		if s.ExchangeType == tipb.ExchangeType_Merge {
+			s.ExchangeType = tipb.ExchangeType_Broadcast
+			// merge all partitions to the first one
+			tasks = tasks[:1]
+		}
 		s.Tasks = tasks
 	}
 	for _, task := range tasks {

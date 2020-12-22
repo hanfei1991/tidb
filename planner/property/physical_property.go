@@ -40,6 +40,8 @@ const (
 	BroadcastType
 	// HashType requires current task to shuffle its data according to some columns.
 	HashType
+	// MergeType merges all inputs to one partition
+	MergeType
 )
 
 // PhysicalProperty stands for the required physical property by parents.

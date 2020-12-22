@@ -2236,8 +2236,8 @@ func (la *LogicalAggregation) getHashAggs(prop *property.PhysicalProperty) []Phy
 		if taskTp == property.MppTaskType && la.checkCanPushDownToMPP() {
 			groupByCols := la.GetGroupByCols()
 			if len(groupByCols) == 0 {
-				// TODO: push down scalar agg later after introducing collected exchange
-				childProp := &property.PhysicalProperty{ExpectedCnt: math.MaxFloat64, TaskTp: taskTp}
+				// push down scalar agg
+				childProp := &property.PhysicalProperty{TaskTp: property.MppTaskType, ExpectedCnt: math.MaxFloat64, PartitionTp: property.MergeType, PartitionCols: prop.PartitionCols, Enforced: true}
 				agg := NewPhysicalHashAgg(la, la.stats.ScaleByExpectCnt(prop.ExpectedCnt), childProp)
 				agg.SetSchema(la.schema.Clone())
 				hashAggs = append(hashAggs, agg)

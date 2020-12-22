@@ -852,6 +852,8 @@ func (p *PhysicalExchangeSender) ExplainInfo() string {
 	case tipb.ExchangeType_Hash:
 		fmt.Fprintf(buffer, "HashPartition")
 		fmt.Fprintf(buffer, ", Hash Cols: %s", expression.ExplainColumnList(p.HashCols))
+	case tipb.ExchangeType_Merge:
+		fmt.Fprintf(buffer, "Merge")
 	}
 	return buffer.String()
 }

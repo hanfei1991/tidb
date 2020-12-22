@@ -59,6 +59,7 @@ func (c *MPPClient) ConstructMPPTasks(ctx context.Context, req *kv.MPPBuildTasks
 	ctx = context.WithValue(ctx, txnStartKey, req.StartTS)
 	bo := NewBackofferWithVars(ctx, copBuildTaskMaxBackoff, nil)
 	if req.KeyRanges == nil {
+		//TODO: updated TiFlash stores may induce errors during constructing MPP tasks
 		return c.selectAllTiFlashStore(), nil
 	}
 	tasks, err := buildBatchCopTasks(bo, c.store.regionCache, &copRanges{mid: req.KeyRanges}, kv.TiFlash)

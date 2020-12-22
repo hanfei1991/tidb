@@ -1490,7 +1490,6 @@ func (p *PhysicalHashAgg) attach2Task(tasks ...task) task {
 					return mpp
 				} else {
 					/// 2-phase agg: partial + final agg with two types partitions: hash partition or collected partition
-					// TODO: add collected partition agg
 					partialAgg, finalAgg := p.newPartialAggregate(kv.TiFlash)
 					if partialAgg == nil {
 						finalAgg.SetChildren(mpp.p)
@@ -1512,6 +1511,33 @@ func (p *PhysicalHashAgg) attach2Task(tasks ...task) task {
 						// must not occur unless bugs
 						return nil
 					}
+				}
+			}
+		} else if mpp.partTp == property.MergeType {
+			if receiver, ok := mpp.p.(*PhysicalExchangeReceiver); !ok {
+				return nil
+			} else {
+				/// 2-phase agg: partial + final agg for merge collected partition
+				partialAgg, finalAgg := p.newPartialAggregate(kv.TiFlash)
+				if partialAgg == nil {
+					finalAgg.SetChildren(mpp.p)
+					mpp.p = finalAgg
+					mpp.addCost(p.GetCost(inputRows, false))
+					return mpp
+				}
+				if _, ook := receiver.children[0].(*PhysicalExchangeSender); ook {
+					// NOTE: new a mpp task and set partial and final agg
+					oldMpp := mpp.oldMppTask.copy().(*mppTask)
+					partialAgg.SetChildren(oldMpp.p)
+					oldMpp.p = partialAgg
+					newMpp := oldMpp.enforceExchangerImpl(mpp.oldProp)
+					finalAgg.SetChildren(newMpp.p)
+					newMpp.p = finalAgg
+					newMpp.addCost(p.GetCost(inputRows, false))
+					return newMpp
+				} else {
+					// must not occur unless bugs
+					return nil
 				}
 			}
 		} else {
@@ -1638,7 +1664,7 @@ func (t *mppTask) needEnforce(prop *property.PhysicalProperty) bool {
 	switch prop.PartitionTp {
 	case property.AnyType:
 		return false
-	case property.BroadcastType:
+	case property.BroadcastType, property.MergeType:
 		return true
 	default:
 		if t.partTp != property.HashType {
