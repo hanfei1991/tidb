@@ -85,8 +85,7 @@ func (e *mppTaskGenerator) generateMPPTasksForFragment(f *Fragment) (tasks []*kv
 
 	for _, r := range f.ExchangeReceivers {
 		s := r.ChildPf.ExchangeSender
-		if s.ExchangeType == tipb.ExchangeType_Merge {
-			s.ExchangeType = tipb.ExchangeType_Broadcast
+		if s.ExchangeType == tipb.ExchangeType_PassThrough {
 			// merge all partitions to the first one
 			tasks = tasks[:1]
 		}

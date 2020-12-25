@@ -1513,7 +1513,7 @@ func (p *PhysicalHashAgg) attach2Task(tasks ...task) task {
 					}
 				}
 			}
-		} else if mpp.partTp == property.MergeType {
+		} else if mpp.partTp == property.PassThroughType {
 			if receiver, ok := mpp.p.(*PhysicalExchangeReceiver); !ok {
 				return nil
 			} else {
@@ -1664,7 +1664,7 @@ func (t *mppTask) needEnforce(prop *property.PhysicalProperty) bool {
 	switch prop.PartitionTp {
 	case property.AnyType:
 		return false
-	case property.BroadcastType, property.MergeType:
+	case property.BroadcastType, property.PassThroughType:
 		return true
 	default:
 		if t.partTp != property.HashType {
@@ -1695,8 +1695,12 @@ func (t *mppTask) enforceExchanger(prop *property.PhysicalProperty) *mppTask {
 
 func (t *mppTask) enforceExchangerImpl(prop *property.PhysicalProperty) *mppTask {
 	ctx := t.p.SCtx()
+	exchangeType := tipb.ExchangeType(prop.PartitionTp)
+	if prop.PartitionTp == property.PassThroughType {
+		exchangeType = tipb.ExchangeType_PassThrough
+	}
 	sender := PhysicalExchangeSender{
-		ExchangeType: tipb.ExchangeType(prop.PartitionTp),
+		ExchangeType: exchangeType,
 		HashCols:     prop.PartitionCols,
 	}.Init(ctx, t.p.statsInfo())
 	sender.SetChildren(t.p)

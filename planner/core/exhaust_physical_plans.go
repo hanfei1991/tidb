@@ -2237,7 +2237,7 @@ func (la *LogicalAggregation) getHashAggs(prop *property.PhysicalProperty) []Phy
 			groupByCols := la.GetGroupByCols()
 			if len(groupByCols) == 0 {
 				// push down scalar agg
-				childProp := &property.PhysicalProperty{TaskTp: property.MppTaskType, ExpectedCnt: math.MaxFloat64, PartitionTp: property.MergeType, PartitionCols: prop.PartitionCols, Enforced: true}
+				childProp := &property.PhysicalProperty{TaskTp: property.MppTaskType, ExpectedCnt: math.MaxFloat64, PartitionTp: property.PassThroughType, PartitionCols: prop.PartitionCols, Enforced: true}
 				agg := NewPhysicalHashAgg(la, la.stats.ScaleByExpectCnt(prop.ExpectedCnt), childProp)
 				agg.SetSchema(la.schema.Clone())
 				hashAggs = append(hashAggs, agg)
