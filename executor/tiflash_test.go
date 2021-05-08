@@ -270,7 +270,7 @@ func (s *tiflashTestSuite) TestPartitionTable(c *C) {
 	tk.MustQuery("select count(*) from t").Check(testkit.Rows("4"))
 	failpoint.Disable("github.com/pingcap/tidb/executor/checkTotalMPPTasks")
 	tk.MustExec("set @@session.tidb_partition_prune_mode='static-only'")
-	failpoint.Enable("github.com/pingcap/tidb/executor/checkUseMPP", `return(false)`)
+//	failpoint.Enable("github.com/pingcap/tidb/executor/checkUseMPP", `return(false)`)
 	tk.MustQuery("select count(*) from t").Check(testkit.Rows("4"))
 	tk.MustExec("set @@session.tidb_partition_prune_mode='dynamic-only'")
 	failpoint.Enable("github.com/pingcap/tidb/executor/checkUseMPP", `return(true)`)

@@ -772,11 +772,11 @@
       {
         "SQL": "select /*+ use_index(t partition(p_non_exist)) */ * from t partition(p1,p2)",
         "Plan": [
-          "PartitionUnion 20000.00 root  ",
-          "├─TableReader 10000.00 root  data:TableFullScan",
-          "│ └─TableFullScan 10000.00 cop[tiflash] table:t, partition:p1 keep order:false, stats:pseudo",
-          "└─TableReader 10000.00 root  data:TableFullScan",
-          "  └─TableFullScan 10000.00 cop[tiflash] table:t, partition:p2 keep order:false, stats:pseudo"
+          "TableReader 20000.00 root  data:ExchangeSender",
+          "└─ExchangeSender 20000.00 cop[tiflash]  ExchangeType: PassThrough",
+          "  └─PartitionUnion 20000.00 cop[tiflash]  ",
+          "    ├─TableFullScan 10000.00 cop[tiflash] table:t, partition:p1 keep order:false, stats:pseudo",
+          "    └─TableFullScan 10000.00 cop[tiflash] table:t, partition:p2 keep order:false, stats:pseudo"
         ],
         "Warn": [
           "Warning 1105 Unknown partitions (p_non_exist) in optimizer hint /*+ USE_INDEX(t PARTITION(p_non_exist)) */"
@@ -800,13 +800,12 @@
       {
         "SQL": "select /*+ ignore_index(t partition(p0, p1) b, c) */ * from t",
         "Plan": [
-          "PartitionUnion 30000.00 root  ",
-          "├─TableReader 10000.00 root  data:TableFullScan",
-          "│ └─TableFullScan 10000.00 cop[tiflash] table:t, partition:p0 keep order:false, stats:pseudo",
-          "├─TableReader 10000.00 root  data:TableFullScan",
-          "│ └─TableFullScan 10000.00 cop[tiflash] table:t, partition:p1 keep order:false, stats:pseudo",
-          "└─TableReader 10000.00 root  data:TableFullScan",
-          "  └─TableFullScan 10000.00 cop[tiflash] table:t, partition:p2 keep order:false, stats:pseudo"
+          "TableReader 30000.00 root  data:ExchangeSender",
+          "└─ExchangeSender 30000.00 cop[tiflash]  ExchangeType: PassThrough",
+          "  └─PartitionUnion 30000.00 cop[tiflash]  ",
+          "    ├─TableFullScan 10000.00 cop[tiflash] table:t, partition:p0 keep order:false, stats:pseudo",
+          "    ├─TableFullScan 10000.00 cop[tiflash] table:t, partition:p1 keep order:false, stats:pseudo",
+          "    └─TableFullScan 10000.00 cop[tiflash] table:t, partition:p2 keep order:false, stats:pseudo"
         ],
         "Warn": null
       },
@@ -814,20 +813,18 @@
         "SQL": "select /*+ hash_join(t1, t2 partition(p0)) */ * from t t1 join t t2 on t1.a = t2.a",
         "Plan": [
           "HashJoin 37500.00 root  inner join, equal:[eq(test.t.a, test.t.a)]",
-          "├─PartitionUnion(Build) 30000.00 root  ",
-          "│ ├─TableReader 10000.00 root  data:TableFullScan",
-          "│ │ └─TableFullScan 10000.00 cop[tiflash] table:t2, partition:p0 keep order:false, stats:pseudo",
-          "│ ├─TableReader 10000.00 root  data:TableFullScan",
-          "│ │ └─TableFullScan 10000.00 cop[tiflash] table:t2, partition:p1 keep order:false, stats:pseudo",
-          "│ └─TableReader 10000.00 root  data:TableFullScan",
-          "│   └─TableFullScan 10000.00 cop[tiflash] table:t2, partition:p2 keep order:false, stats:pseudo",
-          "└─PartitionUnion(Probe) 30000.00 root  ",
-          "  ├─TableReader 10000.00 root  data:TableFullScan",
-          "  │ └─TableFullScan 10000.00 cop[tiflash] table:t1, partition:p0 keep order:false, stats:pseudo",
-          "  ├─TableReader 10000.00 root  data:TableFullScan",
-          "  │ └─TableFullScan 10000.00 cop[tiflash] table:t1, partition:p1 keep order:false, stats:pseudo",
-          "  └─TableReader 10000.00 root  data:TableFullScan",
-          "    └─TableFullScan 10000.00 cop[tiflash] table:t1, partition:p2 keep order:false, stats:pseudo"
+          "├─TableReader(Build) 30000.00 root  data:ExchangeSender",
+          "│ └─ExchangeSender 30000.00 cop[tiflash]  ExchangeType: PassThrough",
+          "│   └─PartitionUnion 30000.00 cop[tiflash]  ",
+          "│     ├─TableFullScan 10000.00 cop[tiflash] table:t2, partition:p0 keep order:false, stats:pseudo",
+          "│     ├─TableFullScan 10000.00 cop[tiflash] table:t2, partition:p1 keep order:false, stats:pseudo",
+          "│     └─TableFullScan 10000.00 cop[tiflash] table:t2, partition:p2 keep order:false, stats:pseudo",
+          "└─TableReader(Probe) 30000.00 root  data:ExchangeSender",
+          "  └─ExchangeSender 30000.00 cop[tiflash]  ExchangeType: PassThrough",
+          "    └─PartitionUnion 30000.00 cop[tiflash]  ",
+          "      ├─TableFullScan 10000.00 cop[tiflash] table:t1, partition:p0 keep order:false, stats:pseudo",
+          "      ├─TableFullScan 10000.00 cop[tiflash] table:t1, partition:p1 keep order:false, stats:pseudo",
+          "      └─TableFullScan 10000.00 cop[tiflash] table:t1, partition:p2 keep order:false, stats:pseudo"
         ],
         "Warn": [
           "Warning 1105 Optimizer Hint /*+ HASH_JOIN(t1, t2 PARTITION(p0)) */ is inapplicable on specified partitions"
@@ -1527,40 +1524,40 @@
       {
         "SQL": "select 1 from s1",
         "Plan": [
-			"Projection 1.00 root  1->Column#1",
-			"└─TableDual 1.00 root  rows:1"
+          "Projection 1.00 root  1->Column#1",
+          "└─TableDual 1.00 root  rows:1"
         ]
-	  },
-	  {
+      },
+      {
         "SQL": "select count(1) from s1",
         "Plan": [
-			"StreamAgg 1.00 root  funcs:count(1)->Column#1",
-			"└─TableDual 1.00 root  rows:1"
+          "StreamAgg 1.00 root  funcs:count(1)->Column#1",
+          "└─TableDual 1.00 root  rows:1"
         ]
-	  },
-	  {
+      },
+      {
         "SQL": "select count(*) from s1",
         "Plan": [
-			"StreamAgg 1.00 root  funcs:count(1)->Column#1",
-			"└─TableDual 1.00 root  rows:1"
+          "StreamAgg 1.00 root  funcs:count(1)->Column#1",
+          "└─TableDual 1.00 root  rows:1"
         ]
-	  },
-	  {
+      },
+      {
         "SQL": "select sum(1) from s1",
         "Plan": [
-			"StreamAgg 1.00 root  funcs:sum(1)->Column#1",
-			"└─TableDual 1.00 root  rows:1"
+          "StreamAgg 1.00 root  funcs:sum(1)->Column#1",
+          "└─TableDual 1.00 root  rows:1"
         ]
-	  },
-	  {
+      },
+      {
         "SQL": "select count(1) as cnt from s1 union select count(1) as cnt from s2",
         "Plan": [
-			"HashAgg 2.00 root  group by:Column#3, funcs:firstrow(Column#3)->Column#3",
-			"└─Union 2.00 root  ",
-			"  ├─StreamAgg 1.00 root  funcs:count(1)->Column#1",
-			"  │ └─TableDual 1.00 root  rows:1",
-			"  └─StreamAgg 1.00 root  funcs:count(1)->Column#2",
-			"    └─TableDual 1.00 root  rows:1"
+          "HashAgg 2.00 root  group by:Column#3, funcs:firstrow(Column#3)->Column#3",
+          "└─Union 2.00 root  ",
+          "  ├─StreamAgg 1.00 root  funcs:count(1)->Column#1",
+          "  │ └─TableDual 1.00 root  rows:1",
+          "  └─StreamAgg 1.00 root  funcs:count(1)->Column#2",
+          "    └─TableDual 1.00 root  rows:1"
         ]
       }
     ]
