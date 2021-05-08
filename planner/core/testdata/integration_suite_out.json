@@ -812,19 +812,21 @@
       {
         "SQL": "select /*+ hash_join(t1, t2 partition(p0)) */ * from t t1 join t t2 on t1.a = t2.a",
         "Plan": [
-          "HashJoin 37500.00 root  inner join, equal:[eq(test.t.a, test.t.a)]",
-          "├─TableReader(Build) 30000.00 root  data:ExchangeSender",
-          "│ └─ExchangeSender 30000.00 cop[tiflash]  ExchangeType: PassThrough",
-          "│   └─PartitionUnion 30000.00 cop[tiflash]  ",
-          "│     ├─TableFullScan 10000.00 cop[tiflash] table:t2, partition:p0 keep order:false, stats:pseudo",
-          "│     ├─TableFullScan 10000.00 cop[tiflash] table:t2, partition:p1 keep order:false, stats:pseudo",
-          "│     └─TableFullScan 10000.00 cop[tiflash] table:t2, partition:p2 keep order:false, stats:pseudo",
-          "└─TableReader(Probe) 30000.00 root  data:ExchangeSender",
-          "  └─ExchangeSender 30000.00 cop[tiflash]  ExchangeType: PassThrough",
-          "    └─PartitionUnion 30000.00 cop[tiflash]  ",
-          "      ├─TableFullScan 10000.00 cop[tiflash] table:t1, partition:p0 keep order:false, stats:pseudo",
-          "      ├─TableFullScan 10000.00 cop[tiflash] table:t1, partition:p1 keep order:false, stats:pseudo",
-          "      └─TableFullScan 10000.00 cop[tiflash] table:t1, partition:p2 keep order:false, stats:pseudo"
+          "TableReader 37500.00 root  data:ExchangeSender",
+          "└─ExchangeSender 37500.00 cop[tiflash]  ExchangeType: PassThrough",
+          "  └─HashJoin 37500.00 cop[tiflash]  inner join, equal:[eq(test.t.a, test.t.a)]",
+          "    ├─ExchangeReceiver(Build) 30000.00 cop[tiflash]  ",
+          "    │ └─ExchangeSender 30000.00 cop[tiflash]  ExchangeType: HashPartition, Hash Cols: test.t.a",
+          "    │   └─PartitionUnion 30000.00 cop[tiflash]  ",
+          "    │     ├─TableFullScan 10000.00 cop[tiflash] table:t1, partition:p0 keep order:false, stats:pseudo",
+          "    │     ├─TableFullScan 10000.00 cop[tiflash] table:t1, partition:p1 keep order:false, stats:pseudo",
+          "    │     └─TableFullScan 10000.00 cop[tiflash] table:t1, partition:p2 keep order:false, stats:pseudo",
+          "    └─ExchangeReceiver(Probe) 30000.00 cop[tiflash]  ",
+          "      └─ExchangeSender 30000.00 cop[tiflash]  ExchangeType: HashPartition, Hash Cols: test.t.a",
+          "        └─PartitionUnion 30000.00 cop[tiflash]  ",
+          "          ├─TableFullScan 10000.00 cop[tiflash] table:t2, partition:p0 keep order:false, stats:pseudo",
+          "          ├─TableFullScan 10000.00 cop[tiflash] table:t2, partition:p1 keep order:false, stats:pseudo",
+          "          └─TableFullScan 10000.00 cop[tiflash] table:t2, partition:p2 keep order:false, stats:pseudo"
         ],
         "Warn": [
           "Warning 1105 Optimizer Hint /*+ HASH_JOIN(t1, t2 PARTITION(p0)) */ is inapplicable on specified partitions"
