@@ -306,7 +306,8 @@ func (e *mppTaskGenerator) constructMPPTasksImpl(ctx context.Context, ts *Physic
 	}
 
 	splitedRanges, _ := distsql.SplitRangesBySign(ts.Ranges, false, false, ts.Table.IsCommonHandle)
-	if ts.Table.GetPartitionInfo() != nil {
+	isPart, pid := ts.IsPartition()
+	if ts.Table.GetPartitionInfo() != nil && !isPart {
 		tmp, _ := e.is.TableByID(ts.Table.ID)
 		tbl := tmp.(table.PartitionedTable)
 		partitions, err := partitionPruning(e.ctx, tbl, ts.PartitionInfo.PruningConds, ts.PartitionInfo.PartitionNames, ts.PartitionInfo.Columns, ts.PartitionInfo.ColumnNames)
@@ -330,11 +331,16 @@ func (e *mppTaskGenerator) constructMPPTasksImpl(ctx context.Context, ts *Physic
 		return ret, nil
 	}
 
-	kvRanges, err := distsql.TableHandleRangesToKVRanges(e.ctx.GetSessionVars().StmtCtx, []int64{ts.Table.ID}, ts.Table.IsCommonHandle, splitedRanges, nil)
+	tableID := ts.Table.ID
+	if isPart {
+		tableID = pid
+	}
+
+	kvRanges, err := distsql.TableHandleRangesToKVRanges(e.ctx.GetSessionVars().StmtCtx, []int64{tableID}, ts.Table.IsCommonHandle, splitedRanges, nil)
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
-	return e.constructMPPTasksForSinglePartitionTable(ctx, kvRanges, ts.Table.ID)
+	return e.constructMPPTasksForSinglePartitionTable(ctx, kvRanges, tableID)
 }
 
 func (e *mppTaskGenerator) constructMPPTasksForSinglePartitionTable(ctx context.Context, kvRanges []kv.KeyRange, tableID int64) ([]*kv.MPPTask, error) {
