@@ -19,6 +19,7 @@ import (
 	"github.com/pingcap/parser/mysql"
 	"github.com/pingcap/tidb/expression"
 	"github.com/pingcap/tidb/expression/aggregation"
+	"github.com/pingcap/tidb/kv"
 	"github.com/pingcap/tidb/sessionctx"
 	"github.com/pingcap/tidb/types"
 )
@@ -449,7 +450,7 @@ func (a *aggregationPushDownSolver) aggPushDown(p LogicalPlan) (_ LogicalPlan, e
 				if err != nil {
 					return nil, err
 				}
-			} else if union, ok1 := child.(*LogicalPartitionUnionAll); ok1 {
+			} else if union, ok1 := child.(*LogicalPartitionUnionAll); ok1 && !child.canPushToCop(kv.TiFlash) {
 				err := a.tryAggPushDownForUnion(&union.LogicalUnionAll, agg)
 				if err != nil {
 					return nil, err
