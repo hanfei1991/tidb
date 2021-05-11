@@ -172,6 +172,7 @@ func untwistPlanAndRemoveUnionAll(stack []PhysicalPlan, forest *[]*PhysicalExcha
 		stack = stack[:len(stack)-1]
 		return errors.Trace(err)
 	case *PhysicalUnionAll:
+		logutil.BgLogger().Info("get ua", zap.String("id", x.ExplainID().String()), zap.Int("ch len", len(x.children)))
 		for _, ch := range x.children {
 			stack = append(stack, ch)
 			err := untwistPlanAndRemoveUnionAll(stack, forest)
