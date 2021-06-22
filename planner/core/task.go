@@ -1830,6 +1830,21 @@ func (p *PhysicalHashAgg) attach2TaskForMpp(tasks ...task) task {
 		attachPlan2Task(finalAgg, t)
 		t.addCost(p.GetCost(inputRows, true))
 		return t
+	case MppScalar:
+		proj := p.convertAvgForMPP()
+		partialAgg, finalAgg := p.newPartialAggregate(kv.TiFlash, true)
+		if partialAgg == nil || finalAgg == nil {
+			return invalidTask
+		}
+		attachPlan2Task(partialAgg, mpp)
+		prop := &property.PhysicalProperty{TaskTp: property.MppTaskType, ExpectedCnt: math.MaxFloat64, PartitionTp: property.AnyType}
+		newMpp := mpp.enforceExchangerImpl(prop)
+		attachPlan2Task(finalAgg, newMpp)
+		if proj != nil {
+			attachPlan2Task(proj, newMpp)
+		}
+		newMpp.addCost(p.GetCost(inputRows, false))
+		return newMpp
 	default:
 		return invalidTask
 	}
