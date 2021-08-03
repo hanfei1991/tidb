@@ -103,11 +103,11 @@ func (rs *batchCopResponse) RespTime() time.Duration {
 // 2. for the remaining regions:
 //    if there is only 1 available store, then put the region to the related store
 //    otherwise, use a greedy algorithm to put it into the store with highest weight
-func balanceBatchCopTask(ctx context.Context, kvStore *kvStore, originalTasks []*batchCopTask, MPPStoreLastFailTime map[string]time.Time, ttl time.Duration) []*batchCopTask {
+func balanceBatchCopTask(ctx context.Context, kvStore *kvStore, originalTasks []*batchCopTask, mppStoreLastFailTime map[string]time.Time, ttl time.Duration) []*batchCopTask {
 	if len(originalTasks) <= 1 {
 		return originalTasks
 	}
-	isMPP := MPPStoreLastFailTime != nil
+	isMPP := mppStoreLastFailTime != nil
 	cache := kvStore.GetRegionCache()
 	storeTaskMap := make(map[uint64]*batchCopTask)
 	// storeCandidateRegionMap stores all the possible store->region map. Its content is
@@ -143,7 +143,7 @@ func balanceBatchCopTask(ctx context.Context, kvStore *kvStore, originalTasks []
 				var last time.Time
 
 				mu.Lock()
-				if last, ok := MPPStoreLastFailTime[s.GetAddr()]; ok && cur.Sub(last) < 100*time.Millisecond {
+				if last, ok := mppStoreLastFailTime[s.GetAddr()]; ok && cur.Sub(last) < 100*time.Millisecond {
 					// The interval time is so short that may happen in a same query, so we needn't to check again.
 					mu.Unlock()
 					return
@@ -160,7 +160,7 @@ func balanceBatchCopTask(ctx context.Context, kvStore *kvStore, originalTasks []
 				if err != nil || resp.Resp.(*mpp.IsAliveResponse).Available == false {
 					logutil.BgLogger().Warn("Cannot detect store's availability", zap.String("store address", s.GetAddr()), zap.String("err message", err.Error()))
 					mu.Lock()
-					MPPStoreLastFailTime[s.GetAddr()] = time.Now()
+					mppStoreLastFailTime[s.GetAddr()] = time.Now()
 					mu.Unlock()
 					return
 				}
@@ -305,7 +305,7 @@ func balanceBatchCopTask(ctx context.Context, kvStore *kvStore, originalTasks []
 	return ret
 }
 
-func buildBatchCopTasks(bo *backoff.Backoffer, store *kvStore, ranges *KeyRanges, storeType kv.StoreType, MPPStoreLastFailTime map[string]time.Time, ttl time.Duration) ([]*batchCopTask, error) {
+func buildBatchCopTasks(bo *backoff.Backoffer, store *kvStore, ranges *KeyRanges, storeType kv.StoreType, mppStoreLastFailTime map[string]time.Time, ttl time.Duration) ([]*batchCopTask, error) {
 	cache := store.GetRegionCache()
 	start := time.Now()
 	const cmdType = tikvrpc.CmdBatchCop
@@ -380,7 +380,7 @@ func buildBatchCopTasks(bo *backoff.Backoffer, store *kvStore, ranges *KeyRanges
 			}
 			logutil.BgLogger().Debug(msg)
 		}
-		batchTasks = balanceBatchCopTask(bo.GetCtx(), store, batchTasks, MPPStoreLastFailTime, ttl)
+		batchTasks = balanceBatchCopTask(bo.GetCtx(), store, batchTasks, mppStoreLastFailTime, ttl)
 		if log.GetLevel() <= zap.DebugLevel {
 			msg := "After region balance:"
 			for _, task := range batchTasks {
